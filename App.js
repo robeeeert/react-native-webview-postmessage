@@ -1,21 +1,42 @@
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import {WebView} from 'react-native';
+
+const html = `
+<script>
+	let timeout;
+	document.addEventListener('message', function() {
+		if (timeout) {
+			clearTimeout(timeout);
+		}
+	});
+	function tryPost() {
+		window.postMessage('"Hello" from the web view');
+		timeout = setTimeout(tryPost, 1000);
+	}
+	tryPost();
+</script>
+`;
 
 export default class App extends React.Component {
-  render() {
-    return (
-      <View style={styles.container}>
-        <Text>Open up App.js to start working on your app!</Text>
-      </View>
-    );
-  }
-}
+	constructor(props) {
+		super(props);
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
+		this.handleMessage = (event) => {
+			console.log('Got message: ' + event.nativeEvent.data);
+			if (this.webview) {
+				console.log('Respond to message');
+				this.webview.postMessage('Hi');
+			}
+		};
+	}
+
+	render() {
+		return (
+			<WebView
+				onMessage={this.handleMessage}
+				source={{html}}
+				ref={(el) => this.webview = el}
+			/>
+		);
+	}
+}
